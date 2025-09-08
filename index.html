@@ -4,7 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MiNINO</title>
-
+  
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#3B82F6">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="MiNINO">
+  
   <!-- UI libs -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -66,6 +73,10 @@
         </button>
         <h2 class="text-xl lg:text-2xl font-bold">MiNINO</h2>
       </div>
+      <!-- LOGOUT DUGME -->
+      <button id="logoutBtn" class="bg-red-500 text-white px-4 py-2 rounded shadow hover:bg-red-600 hidden">
+        <i data-feather="log-out"></i> Logout
+      </button>
     </header>
 
     <!-- DASHBOARD -->
@@ -225,23 +236,69 @@ const SUPABASE_URL = "https://xfdtqeuehntezrbunyuj.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZHRxZXVlaG50ZXpyYnVueXVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczNTE0OTIsImV4cCI6MjA3MjkyNzQ5Mn0.A1Qi04Mb4hLw0wa2rhZKD2YQ2FzlvH_0V_i-LLDj7AQ";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+/* --- AUTO LOGIN PROVERA --- */
+document.addEventListener('DOMContentLoaded', function() {
+  const isLoggedIn = localStorage.getItem('isLoggedIn');
+  const loginTime = localStorage.getItem('loginTime');
+  const twelveHours = 12 * 60 * 60 * 1000; // 12 sati u milisekundama
+
+  // Proveri da li je korisnik ulogovan u poslednjih 12 sati
+  if (isLoggedIn === 'true' && loginTime && (Date.now() - parseInt(loginTime)) < twelveHours) {
+    loginModal.style.display = "none";
+    appContent.style.display = "flex";
+    loadOrders();
+    setupRealtime();
+    updateLogoutButton();
+  } else {
+    // Obriši stare podatke ako su istekli
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('loginTime');
+    loginModal.style.display = "flex";
+    appContent.style.display = "none";
+    updateLogoutButton();
+  }
+});
+
 /* --- LOGIN --- */
 const loginModal = document.getElementById("loginModal");
 const appContent = document.getElementById("appContent");
 const loginBtn = document.getElementById("loginBtn");
 const loginInput = document.getElementById("loginInput");
+const logoutBtn = document.getElementById("logoutBtn");
 const correctPassword = "mininoMNAM2024";
 
 loginBtn.addEventListener("click", async () => {
   if (loginInput.value.trim() === correctPassword) {
+    // Sačuvaj da je korisnik ulogovan
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('loginTime', Date.now().toString());
+    
     loginModal.style.display = "none";
     appContent.style.display = "flex";
     await loadOrders();
     setupRealtime();
+    updateLogoutButton();
   } else {
     alert("Pogrešna lozinka!");
   }
 });
+
+/* --- LOGOUT --- */
+logoutBtn.addEventListener("click", () => {
+  if (confirm("Da li ste sigurni da želite da se izlogujete?")) {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('loginTime');
+    loginModal.style.display = "flex";
+    appContent.style.display = "none";
+    updateLogoutButton();
+  }
+});
+
+/* --- UPDATE LOGOUT BUTTON --- */
+function updateLogoutButton() {
+  const isLoggedIn = localStorage.getItem('isLoggedIn');
+  logoutBtn.classList.toggle('hidden', !isLoggedIn);
+}
 
 /* --- SIDEBAR NAV --- */
 const sidebar = document.getElementById('sidebar');

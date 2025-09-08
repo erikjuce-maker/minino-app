@@ -237,7 +237,7 @@ loginBtn.addEventListener("click", async () => {
     loginModal.style.display = "none";
     appContent.style.display = "flex";
     await loadOrders();
-    setupRealtime(); // uključi realtime sinhronizaciju
+    setupRealtime();
   } else {
     alert("Pogrešna lozinka!");
   }
@@ -325,12 +325,12 @@ orderForm.addEventListener("submit", async (e) => {
   }
 
   orderModal.classList.add("hidden");
-  // loadOrders će se okinuti i preko realtime-a, ali i ovde ručno osvežimo za svaki slučaj:
   await loadOrders();
 });
 
 /* --- FETCH (READ) --- */
 async function loadOrders() {
+  // PROMENJENO: Koristite created_at umesto createdAt
   const { data, error } = await sb.from('orders').select('*').order('created_at', { ascending: true });
   if (error) return alert("Greška pri učitavanju: " + error.message);
   orders = data || [];
@@ -340,7 +340,7 @@ async function loadOrders() {
 /* --- REALTIME SYNC --- */
 let channel;
 function setupRealtime() {
-  if (channel) return; // već podešeno
+  if (channel) return;
   channel = sb.channel('orders-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async () => {
       await loadOrders();
@@ -367,6 +367,9 @@ function updateTable(){
       <td class="p-2 sm:p-4">${o.sweatshirtSize || ""}</td>
       <td class="p-2 sm:p-4">${o.embroideryText || ""}</td>
       <td class="p-2 sm:p-4">${o.woodenBox ? "Da" : "Ne"}</td>
+      <td class="p-2 sm:p-4">${o.customerAddress || ""}</td>
+      <td class="p-2 sm:p-4">${o.customerPhone || ""}</td>
+      <td class="p-2 sm:p-4">${o.orderExtras || ""}</td>
       <td class="p-2 sm:p-4 ${statusClass} rounded"><span class="text-xs">${o.orderStatus || ""}</span></td>
       <td class="p-2 sm:p-4">${Number(o.orderPrice) || 0} RSD</td>
       <td class="p-2 sm:p-4">

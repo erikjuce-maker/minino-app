@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MiNINO</title>
+
+  <!-- UI libs -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+
+  <!-- Supabase v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 flex flex-col lg:flex-row">
+
+<!-- LOGIN MODAL -->
+<div id="loginModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+  <div class="bg-white p-6 rounded shadow text-center w-80">
+    <h2 class="mb-4 text-xl font-bold">Unesite lozinku</h2>
+    <input type="password" id="loginInput" class="border p-2 rounded w-full mb-4" placeholder="Lozinka">
+    <button id="loginBtn" class="bg-blue-500 text-white px-4 py-2 rounded w-full">Pristupi</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appContent" class="flex-1 w-full hidden">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar"
+    class="fixed inset-y-0 left-0 w-64 bg-white shadow-lg transform -translate-x-full transition-transform duration-300 lg:translate-x-0 z-40">
+    <div class="p-4 flex items-center space-x-2">
+      <span class="text-blue-500 text-2xl"><i data-feather="package"></i></span>
+      <h1 class="text-lg font-bold">MiNINO</h1>
+    </div>
+    <nav class="mt-6">
+      <h2 class="px-4 text-xs text-gray-500">GLAVNI MENI</h2>
+      <ul>
+        <li>
+          <a href="#dashboard" class="flex items-center p-4 space-x-2 text-gray-700 hover:bg-gray-100 nav-item">
+            <i data-feather="home"></i><span>Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="#orders" class="flex items-center p-4 space-x-2 text-gray-700 hover:bg-gray-100 nav-item">
+            <i data-feather="shopping-bag"></i><span>Narudžbine</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="flex-1 lg:ml-64 p-4 lg:p-6 transition-all duration-300">
+
+    <!-- HEADER -->
+    <header class="flex justify-between items-center mb-4 lg:mb-6">
+      <div class="flex items-center space-x-2">
+        <button id="sidebarToggle" class="lg:hidden p-2 bg-blue-500 text-white rounded-md shadow">
+          <i data-feather="menu"></i>
+        </button>
+        <h2 class="text-xl lg:text-2xl font-bold">MiNINO</h2>
+      </div>
+    </header>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-lg shadow" data-aos="fade-up">
+          <h3 class="text-sm font-medium text-gray-500">Ukupno narudžbina</h3>
+          <p class="mt-2 text-2xl font-bold" id="totalOrders">0</p>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow" data-aos="fade-up" data-aos-delay="100">
+          <h3 class="text-sm font-medium text-gray-500">Prihod</h3>
+          <p class="mt-2 text-2xl font-bold" id="totalRevenue">0 RSD</p>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow" data-aos="fade-up" data-aos-delay="200">
+          <h3 class="text-sm font-medium text-gray-500">Aktivne narudžbine</h3>
+          <p class="mt-2 text-2xl font-bold" id="activeOrders">0</p>
+        </div>
+      </div>
+      <div class="mt-4 bg-white p-4 rounded-lg shadow" data-aos="fade-up">
+        <canvas id="ordersChart" class="w-full h-64"></canvas>
+      </div>
+    </section>
+
+    <!-- ORDERS -->
+    <section id="orders" class="hidden">
+      <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
+        <h2 class="text-xl lg:text-2xl font-bold">Narudžbine</h2>
+        <input id="searchInput" type="text" placeholder="Pretraga po imenu i prezimenu" class="border p-2 rounded w-full sm:w-auto">
+        <button id="newOrderBtn" class="bg-blue-500 text-white px-4 py-2 rounded shadow hover:bg-blue-600">+ Nova narudžbina</button>
+      </div>
+
+      <div class="bg-white rounded-lg shadow overflow-x-auto">
+        <table class="min-w-full table-auto text-sm sm:text-base">
+          <thead>
+            <tr class="bg-gray-100 text-left">
+              <th class="p-2 sm:p-4">Ime i prezime</th>
+              <th class="p-2 sm:p-4">Vrsta trenerke</th>
+              <th class="p-2 sm:p-4">Boja</th>
+              <th class="p-2 sm:p-4">Veličina</th>
+              <th class="p-2 sm:p-4">Tekst/dizajn veza</th>
+              <th class="p-2 sm:p-4">Drvena kutija</th>
+              <th class="p-2 sm:p-4">Adresa</th>
+              <th class="p-2 sm:p-4">Telefon</th>
+              <th class="p-2 sm:p-4">Dodaci</th>
+              <th class="p-2 sm:p-4">Status</th>
+              <th class="p-2 sm:p-4">Cena</th>
+              <th class="p-2 sm:p-4">Obriši</th>
+              <th class="p-2 sm:p-4">PDF</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL NOVA/EDIT NARUDŽBINA -->
+  <div id="orderModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
+    <div class="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <h2 class="text-xl font-bold mb-4" id="orderModalTitle">Nova narudžbina</h2>
+      <form id="orderForm" class="space-y-3 sm:space-y-4">
+
+        <div>
+          <label class="block text-sm font-medium">Ime i prezime</label>
+          <input type="text" id="customerName" required class="w-full border rounded p-2">
+        </div>
+
+
+        <div>
+          <label class="block text-sm font-medium">Vrsta trenerke</label>
+          <select id="sweatshirtType" class="w-full border rounded p-2">
+            <option value="Letnja">Letnja</option>
+            <option value="Zimska">Zimska</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Boja trenerke</label>
+          <input type="text" id="sweatshirtColor" class="w-full border rounded p-2">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Veličina</label>
+          <select id="sweatshirtSize" class="w-full border rounded p-2">
+            <option>62</option><option>74</option><option>80</option><option>86</option>
+            <option>92</option><option>98</option><option>104</option><option>110</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Tekst/dizajn veza</label>
+          <textarea id="embroideryText" class="w-full border rounded p-2 resize-y" rows="2"></textarea>
+        </div>
+
+        <div>
+          <label class="inline-flex items-center mt-2">
+            <input type="checkbox" id="woodenBox" class="mr-2">
+            Drvena kutija
+          </label>
+          <div id="woodenBoxDetails" class="hidden mt-2">
+            <label class="block text-sm font-medium">Opis gravure za kutiju</label>
+            <textarea id="boxEngraving" class="w-full border rounded p-2 resize-y" rows="2"></textarea>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Adresa</label>
+          <input type="text" id="customerAddress" class="w-full border rounded p-2">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Broj telefona</label>
+          <input type="tel" id="customerPhone" class="w-full border rounded p-2">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Dodaci</label>
+          <textarea id="orderExtras" class="w-full border rounded p-2 resize-y" rows="2"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Status</label>
+          <select id="orderStatus" class="w-full border rounded p-2">
+            <option>Novo</option>
+            <option>U izradi</option>
+            <option>Spremno</option>
+            <option>Hitno</option>
+            <option>Gotovo</option>
+            <option>Lično preuzimanje</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium">Cena (RSD)</label>
+          <input type="number" id="orderPrice" required class="w-full border rounded p-2" min="0" step="1">
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button type="button" id="closeModal" class="px-4 py-2 bg-gray-300 rounded">Otkaži</button>
+          <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Sačuvaj</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* --- INIT ICONS/ANIM --- */
+feather.replace();
+AOS.init();
+
+/* --- SUPABASE CLIENT --- */
+const SUPABASE_URL = "https://xfdtqeuehntezrbunyuj.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZHRxZXVlaG50ZXpyYnVueXVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczNTE0OTIsImV4cCI6MjA3MjkyNzQ5Mn0.A1Qi04Mb4hLw0wa2rhZKD2YQ2FzlvH_0V_i-LLDj7AQ";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* --- LOGIN --- */
+const loginModal = document.getElementById("loginModal");
+const appContent = document.getElementById("appContent");
+const loginBtn = document.getElementById("loginBtn");
+const loginInput = document.getElementById("loginInput");
+const correctPassword = "mininoMNAM2024";
+
+loginBtn.addEventListener("click", async () => {
+  if (loginInput.value.trim() === correctPassword) {
+    loginModal.style.display = "none";
+    appContent.style.display = "flex";
+    await loadOrders();
+    setupRealtime(); // uključi realtime sinhronizaciju
+  } else {
+    alert("Pogrešna lozinka!");
+  }
+});
+
+/* --- SIDEBAR NAV --- */
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebarToggle');
+const navLinks = document.querySelectorAll('#sidebar .nav-item');
+
+sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('-translate-x-full'));
+navLinks.forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('dashboard').classList.toggle('hidden', link.getAttribute('href') !== '#dashboard');
+    document.getElementById('orders').classList.toggle('hidden', link.getAttribute('href') !== '#orders');
+    if (window.innerWidth < 1024) sidebar.classList.add('-translate-x-full');
+  });
+});
+
+/* --- CHART --- */
+const ctx = document.getElementById('ordersChart').getContext('2d');
+const ordersChart = new Chart(ctx, {
+  type: 'line',
+  data: { labels: [], datasets: [{ label: 'Narudžbine', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.2)', fill: true }] },
+  options: { responsive: true, maintainAspectRatio: false }
+});
+
+/* --- STATE & ELEMENTS --- */
+let orders = [];
+let editingIndex = null;
+
+const tbody = document.querySelector("#orders table tbody");
+const newOrderBtn = document.getElementById("newOrderBtn");
+const orderModal = document.getElementById("orderModal");
+const closeModal = document.getElementById("closeModal");
+const orderForm = document.getElementById("orderForm");
+const woodenBox = document.getElementById("woodenBox");
+const woodenBoxDetails = document.getElementById("woodenBoxDetails");
+const orderModalTitle = document.getElementById("orderModalTitle");
+const searchInput = document.getElementById("searchInput");
+
+/* --- Wooden box toggle --- */
+woodenBox.addEventListener("change", () => woodenBoxDetails.classList.toggle("hidden", !woodenBox.checked));
+
+/* --- OPEN/CLOSE MODAL --- */
+newOrderBtn.addEventListener("click", () => {
+  editingIndex = null;
+  orderForm.reset();
+  woodenBoxDetails.classList.add("hidden");
+  orderModalTitle.textContent = "Nova narudžbina";
+  orderModal.classList.remove("hidden");
+});
+closeModal.addEventListener("click", () => orderModal.classList.add("hidden"));
+
+/* --- SAVE (INSERT/UPDATE) --- */
+orderForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const orderData = {
+    customerName: document.getElementById("customerName").value.trim(),
+    sweatshirtType: document.getElementById("sweatshirtType").value,
+    sweatshirtColor: document.getElementById("sweatshirtColor").value.trim(),
+    sweatshirtSize: document.getElementById("sweatshirtSize").value,
+    embroideryText: document.getElementById("embroideryText").value.trim(),
+    woodenBox: woodenBox.checked,
+    boxEngraving: document.getElementById("boxEngraving").value.trim(),
+    customerAddress: document.getElementById("customerAddress").value.trim(),
+    customerPhone: document.getElementById("customerPhone").value.trim(),
+    orderExtras: document.getElementById("orderExtras").value.trim(),
+    orderStatus: document.getElementById("orderStatus").value,
+    orderPrice: Number(document.getElementById("orderPrice").value)
+  };
+
+  if (!orderData.customerName) return alert("Ime i prezime je obavezno.");
+  if (Number.isNaN(orderData.orderPrice)) return alert("Cena mora biti broj.");
+
+  if (editingIndex !== null) {
+    const id = orders[editingIndex].id;
+    const { error } = await sb.from('orders').update(orderData).eq('id', id);
+    if (error) return alert("Greška pri izmeni: " + error.message);
+  } else {
+    const { error } = await sb.from('orders').insert([orderData]);
+    if (error) return alert("Greška pri čuvanju: " + error.message);
+  }
+
+  orderModal.classList.add("hidden");
+  // loadOrders će se okinuti i preko realtime-a, ali i ovde ručno osvežimo za svaki slučaj:
+  await loadOrders();
+});
+
+/* --- FETCH (READ) --- */
+async function loadOrders() {
+  const { data, error } = await sb.from('orders').select('*').order('created_at', { ascending: true });
+  if (error) return alert("Greška pri učitavanju: " + error.message);
+  orders = data || [];
+  updateTable();
+}
+
+/* --- REALTIME SYNC --- */
+let channel;
+function setupRealtime() {
+  if (channel) return; // već podešeno
+  channel = sb.channel('orders-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async () => {
+      await loadOrders();
+    })
+    .subscribe();
+}
+
+/* --- RENDER TABLE --- */
+function updateTable(){
+  tbody.innerHTML = "";
+
+  orders.forEach((o, i) => {
+    let statusClass = "bg-white text-black";
+    if (o.orderStatus === "Hitno") statusClass = "bg-red-200 text-red-800";
+    else if (o.orderStatus === "Spremno") statusClass = "bg-yellow-200 text-yellow-800";
+    else if (o.orderStatus === "U izradi") statusClass = "bg-blue-200 text-blue-800";
+    else if (o.orderStatus === "Gotovo" || o.orderStatus === "Lično preuzimanje") statusClass = "bg-green-200 text-green-800";
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="p-2 sm:p-4 cursor-pointer">${o.customerName || ""}</td>
+      <td class="p-2 sm:p-4">${o.sweatshirtType || ""}</td>
+      <td class="p-2 sm:p-4">${o.sweatshirtColor || ""}</td>
+      <td class="p-2 sm:p-4">${o.sweatshirtSize || ""}</td>
+      <td class="p-2 sm:p-4">${o.embroideryText || ""}</td>
+      <td class="p-2 sm:p-4">${o.woodenBox ? "Da" : "Ne"}</td>
+      <td class="p-2 sm:p-4 ${statusClass} rounded"><span class="text-xs">${o.orderStatus || ""}</span></td>
+      <td class="p-2 sm:p-4">${Number(o.orderPrice) || 0} RSD</td>
+      <td class="p-2 sm:p-4">
+        <button class="deleteBtn text-red-500 hover:text-red-700" title="Obriši"><i class="fa-solid fa-trash"></i></button>
+      </td>
+      <td class="p-2 sm:p-4">
+        <button class="exportBtn text-green-500 hover:text-green-700" title="PDF"><i class="fa-solid fa-file-pdf"></i></button>
+      </td>
+    `;
+
+    tr.querySelector(".deleteBtn").addEventListener("click", async (ev) => {
+      ev.stopPropagation();
+      if (confirm("Da li ste sigurni da želite da obrišete ovu narudžbinu?")) {
+        const { error } = await sb.from('orders').delete().eq('id', o.id);
+        if (error) return alert("Greška pri brisanju: " + error.message);
+        await loadOrders();
+      }
+    });
+
+    tr.querySelector(".exportBtn").addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      exportPDF(i);
+    });
+
+    tr.addEventListener("click", (e) => {
+      if (!e.target.closest(".deleteBtn,.exportBtn")) editOrder(i);
+    });
+
+    tbody.appendChild(tr);
+  });
+
+  updateDashboard();
+}
+
+/* --- EDIT FILL --- */
+function editOrder(index){
+  const o = orders[index];
+  editingIndex = index;
+  document.getElementById("customerName").value = o.customerName || "";
+  document.getElementById("sweatshirtType").value = o.sweatshirtType || "Letnja";
+  document.getElementById("sweatshirtColor").value = o.sweatshirtColor || "";
+  document.getElementById("sweatshirtSize").value = o.sweatshirtSize || "62";
+  document.getElementById("embroideryText").value = o.embroideryText || "";
+  woodenBox.checked = !!o.woodenBox;
+  document.getElementById("boxEngraving").value = o.boxEngraving || "";
+  woodenBoxDetails.classList.toggle("hidden", !o.woodenBox);
+  document.getElementById("customerAddress").value = o.customerAddress || "";
+  document.getElementById("customerPhone").value = o.customerPhone || "";
+  document.getElementById("orderExtras").value = o.orderExtras || "";
+  document.getElementById("orderStatus").value = o.orderStatus || "Novo";
+  document.getElementById("orderPrice").value = Number(o.orderPrice) || 0;
+  orderModalTitle.textContent = "Izmena narudžbine";
+  orderModal.classList.remove("hidden");
+}
+
+/* --- SEARCH --- */
+searchInput.addEventListener("input", () => {
+  const filter = searchInput.value.toLowerCase();
+  tbody.querySelectorAll("tr").forEach(tr => {
+    const name = (tr.cells[0]?.textContent || "").toLowerCase();
+    tr.style.display = name.includes(filter) ? "" : "none";
+  });
+});
+
+/* --- DASHBOARD UPDATE --- */
+function updateDashboard(){
+  const total = orders.length;
+  const active = orders.filter(o => o.orderStatus !== "Gotovo" && o.orderStatus !== "Lično preuzimanje").length;
+  const revenue = orders.reduce((sum, o) => sum + (Number(o.orderPrice) || 0), 0);
+  document.getElementById("totalOrders").textContent = total;
+  document.getElementById("activeOrders").textContent = active;
+  document.getElementById("totalRevenue").textContent = revenue + " RSD";
+
+  ordersChart.data.labels = orders.map((_, i) => "Narudžbina " + (i+1));
+  ordersChart.data.datasets[0].data = orders.map(o => Number(o.orderPrice) || 0);
+  ordersChart.update();
+}
+
+/* --- EXPORT PDF --- */
+function exportPDF(index){
+  const o = orders[index];
+  if(!o) return;
+  const pdfContent = document.createElement("div");
+  pdfContent.innerHTML = `
+    <h2 style="text-align:center;">Narudžbina - MiNINO</h2>
+    <table style="width:100%; border-collapse:collapse; margin-top:20px;">
+      <tr><td style="font-weight:bold; padding:5px;">Ime i prezime:</td><td style="padding:5px;">${o.customerName || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Vrsta trenerke:</td><td style="padding:5px;">${o.sweatshirtType || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Boja:</td><td style="padding:5px;">${o.sweatshirtColor || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Veličina:</td><td style="padding:5px;">${o.sweatshirtSize || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Tekst/dizajn veza:</td><td style="padding:5px;">${o.embroideryText || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Drvena kutija:</td><td style="padding:5px;">${o.woodenBox ? "Da" : "Ne"}</td></tr>
+      ${o.woodenBox ? `<tr><td style="font-weight:bold; padding:5px;">Opis gravure:</td><td style="padding:5px;">${o.boxEngraving || ""}</td></tr>` : ""}
+      <tr><td style="font-weight:bold; padding:5px;">Adresa:</td><td style="padding:5px;">${o.customerAddress || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Telefon:</td><td style="padding:5px;">${o.customerPhone || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Dodaci:</td><td style="padding:5px;">${o.orderExtras || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Status:</td><td style="padding:5px;">${o.orderStatus || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Cena:</td><td style="padding:5px;">${Number(o.orderPrice) || 0} RSD</td></tr>
+    </table>
+  `;
+  html2pdf().set({filename:`Narudzbina_${(o.customerName||"")}.pdf`}).from(pdfContent).save();
+}
+</script>
+</body>
+</html>

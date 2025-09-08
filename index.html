@@ -298,22 +298,22 @@ orderForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const orderData = {
-    customerName: document.getElementById("customerName").value.trim(),
-    sweatshirtType: document.getElementById("sweatshirtType").value,
-    sweatshirtColor: document.getElementById("sweatshirtColor").value.trim(),
-    sweatshirtSize: document.getElementById("sweatshirtSize").value,
-    embroideryText: document.getElementById("embroideryText").value.trim(),
-    woodenBox: woodenBox.checked,
-    boxEngraving: document.getElementById("boxEngraving").value.trim(),
-    customerAddress: document.getElementById("customerAddress").value.trim(),
-    customerPhone: document.getElementById("customerPhone").value.trim(),
-    orderExtras: document.getElementById("orderExtras").value.trim(),
-    orderStatus: document.getElementById("orderStatus").value,
-    orderPrice: Number(document.getElementById("orderPrice").value)
+    customername: document.getElementById("customerName").value.trim(),
+    sweatshirttype: document.getElementById("sweatshirtType").value,
+    sweatshirtcolor: document.getElementById("sweatshirtColor").value.trim(),
+    sweatshirtsize: document.getElementById("sweatshirtSize").value,
+    embroiderytext: document.getElementById("embroideryText").value.trim(),
+    woodenbox: woodenBox.checked,
+    boxengraving: document.getElementById("boxEngraving").value.trim(),
+    customeraddress: document.getElementById("customerAddress").value.trim(),
+    customerphone: document.getElementById("customerPhone").value.trim(),
+    orderextras: document.getElementById("orderExtras").value.trim(),
+    orderstatus: document.getElementById("orderStatus").value,
+    orderprice: Number(document.getElementById("orderPrice").value)
   };
 
-  if (!orderData.customerName) return alert("Ime i prezime je obavezno.");
-  if (Number.isNaN(orderData.orderPrice)) return alert("Cena mora biti broj.");
+  if (!orderData.customername) return alert("Ime i prezime je obavezno.");
+  if (Number.isNaN(orderData.orderprice)) return alert("Cena mora biti broj.");
 
   if (editingIndex !== null) {
     const id = orders[editingIndex].id;
@@ -330,8 +330,7 @@ orderForm.addEventListener("submit", async (e) => {
 
 /* --- FETCH (READ) --- */
 async function loadOrders() {
-  // PROMENJENO: Koristite created_at umesto createdAt
-  const { data, error } = await sb.from('orders').select('*').order('created_at', { ascending: true });
+  const { data, error } = await sb.from('orders').select('*').order('id', { ascending: true });
   if (error) return alert("Greška pri učitavanju: " + error.message);
   orders = data || [];
   updateTable();
@@ -354,24 +353,24 @@ function updateTable(){
 
   orders.forEach((o, i) => {
     let statusClass = "bg-white text-black";
-    if (o.orderStatus === "Hitno") statusClass = "bg-red-200 text-red-800";
-    else if (o.orderStatus === "Spremno") statusClass = "bg-yellow-200 text-yellow-800";
-    else if (o.orderStatus === "U izradi") statusClass = "bg-blue-200 text-blue-800";
-    else if (o.orderStatus === "Gotovo" || o.orderStatus === "Lično preuzimanje") statusClass = "bg-green-200 text-green-800";
+    if (o.orderstatus === "Hitno") statusClass = "bg-red-200 text-red-800";
+    else if (o.orderstatus === "Spremno") statusClass = "bg-yellow-200 text-yellow-800";
+    else if (o.orderstatus === "U izradi") statusClass = "bg-blue-200 text-blue-800";
+    else if (o.orderstatus === "Gotovo" || o.orderstatus === "Lično preuzimanje") statusClass = "bg-green-200 text-green-800";
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td class="p-2 sm:p-4 cursor-pointer">${o.customerName || ""}</td>
-      <td class="p-2 sm:p-4">${o.sweatshirtType || ""}</td>
-      <td class="p-2 sm:p-4">${o.sweatshirtColor || ""}</td>
-      <td class="p-2 sm:p-4">${o.sweatshirtSize || ""}</td>
-      <td class="p-2 sm:p-4">${o.embroideryText || ""}</td>
-      <td class="p-2 sm:p-4">${o.woodenBox ? "Da" : "Ne"}</td>
-      <td class="p-2 sm:p-4">${o.customerAddress || ""}</td>
-      <td class="p-2 sm:p-4">${o.customerPhone || ""}</td>
-      <td class="p-2 sm:p-4">${o.orderExtras || ""}</td>
-      <td class="p-2 sm:p-4 ${statusClass} rounded"><span class="text-xs">${o.orderStatus || ""}</span></td>
-      <td class="p-2 sm:p-4">${Number(o.orderPrice) || 0} RSD</td>
+      <td class="p-2 sm:p-4 cursor-pointer">${o.customername || ""}</td>
+      <td class="p-2 sm:p-4">${o.sweatshirttype || ""}</td>
+      <td class="p-2 sm:p-4">${o.sweatshirtcolor || ""}</td>
+      <td class="p-2 sm:p-4">${o.sweatshirtsize || ""}</td>
+      <td class="p-2 sm:p-4">${o.embroiderytext || ""}</td>
+      <td class="p-2 sm:p-4">${o.woodenbox ? "Da" : "Ne"}</td>
+      <td class="p-2 sm:p-4">${o.customeraddress || ""}</td>
+      <td class="p-2 sm:p-4">${o.customerphone || ""}</td>
+      <td class="p-2 sm:p-4">${o.orderextras || ""}</td>
+      <td class="p-2 sm:p-4 ${statusClass} rounded"><span class="text-xs">${o.orderstatus || ""}</span></td>
+      <td class="p-2 sm:p-4">${Number(o.orderprice) || 0} RSD</td>
       <td class="p-2 sm:p-4">
         <button class="deleteBtn text-red-500 hover:text-red-700" title="Obriši"><i class="fa-solid fa-trash"></i></button>
       </td>
@@ -408,19 +407,19 @@ function updateTable(){
 function editOrder(index){
   const o = orders[index];
   editingIndex = index;
-  document.getElementById("customerName").value = o.customerName || "";
-  document.getElementById("sweatshirtType").value = o.sweatshirtType || "Letnja";
-  document.getElementById("sweatshirtColor").value = o.sweatshirtColor || "";
-  document.getElementById("sweatshirtSize").value = o.sweatshirtSize || "62";
-  document.getElementById("embroideryText").value = o.embroideryText || "";
-  woodenBox.checked = !!o.woodenBox;
-  document.getElementById("boxEngraving").value = o.boxEngraving || "";
-  woodenBoxDetails.classList.toggle("hidden", !o.woodenBox);
-  document.getElementById("customerAddress").value = o.customerAddress || "";
-  document.getElementById("customerPhone").value = o.customerPhone || "";
-  document.getElementById("orderExtras").value = o.orderExtras || "";
-  document.getElementById("orderStatus").value = o.orderStatus || "Novo";
-  document.getElementById("orderPrice").value = Number(o.orderPrice) || 0;
+  document.getElementById("customerName").value = o.customername || "";
+  document.getElementById("sweatshirtType").value = o.sweatshirttype || "Letnja";
+  document.getElementById("sweatshirtColor").value = o.sweatshirtcolor || "";
+  document.getElementById("sweatshirtSize").value = o.sweatshirtsize || "62";
+  document.getElementById("embroideryText").value = o.embroiderytext || "";
+  woodenBox.checked = !!o.woodenbox;
+  document.getElementById("boxEngraving").value = o.boxengraving || "";
+  woodenBoxDetails.classList.toggle("hidden", !o.woodenbox);
+  document.getElementById("customerAddress").value = o.customeraddress || "";
+  document.getElementById("customerPhone").value = o.customerphone || "";
+  document.getElementById("orderExtras").value = o.orderextras || "";
+  document.getElementById("orderStatus").value = o.orderstatus || "Novo";
+  document.getElementById("orderPrice").value = Number(o.orderprice) || 0;
   orderModalTitle.textContent = "Izmena narudžbine";
   orderModal.classList.remove("hidden");
 }
@@ -437,14 +436,14 @@ searchInput.addEventListener("input", () => {
 /* --- DASHBOARD UPDATE --- */
 function updateDashboard(){
   const total = orders.length;
-  const active = orders.filter(o => o.orderStatus !== "Gotovo" && o.orderStatus !== "Lično preuzimanje").length;
-  const revenue = orders.reduce((sum, o) => sum + (Number(o.orderPrice) || 0), 0);
+  const active = orders.filter(o => o.orderstatus !== "Gotovo" && o.orderstatus !== "Lično preuzimanje").length;
+  const revenue = orders.reduce((sum, o) => sum + (Number(o.orderprice) || 0), 0);
   document.getElementById("totalOrders").textContent = total;
   document.getElementById("activeOrders").textContent = active;
   document.getElementById("totalRevenue").textContent = revenue + " RSD";
 
   ordersChart.data.labels = orders.map((_, i) => "Narudžbina " + (i+1));
-  ordersChart.data.datasets[0].data = orders.map(o => Number(o.orderPrice) || 0);
+  ordersChart.data.datasets[0].data = orders.map(o => Number(o.orderprice) || 0);
   ordersChart.update();
 }
 
@@ -456,21 +455,21 @@ function exportPDF(index){
   pdfContent.innerHTML = `
     <h2 style="text-align:center;">Narudžbina - MiNINO</h2>
     <table style="width:100%; border-collapse:collapse; margin-top:20px;">
-      <tr><td style="font-weight:bold; padding:5px;">Ime i prezime:</td><td style="padding:5px;">${o.customerName || ""}</td></tr>
-      <tr><td style="font-weight:bold; padding:5px;">Vrsta trenerke:</td><td style="padding:5px;">${o.sweatshirtType || ""}</td></tr>
-      <tr><td style="font-weight:bold; padding:5px;">Boja:</td><td style="padding:5px;">${o.sweatshirtColor || ""}</td></tr>
-      <tr><td style="font-weight:bold; padding:5px;">Veličina:</td><td style="padding:5px;">${o.sweatshirtSize || ""}</td></tr>
-      <tr><td style="font-weight:bold; padding:5px;">Tekst/dizajn veza:</td><td style="padding:5px;">${o.embroideryText || ""}</td></tr>
-      <tr><td style="font-weight:bold; padding:5px;">Drvena kutija:</td><td style="padding:5px;">${o.woodenBox ? "Da" : "Ne"}</td></tr>
-      ${o.woodenBox ? `<tr><td style="font-weight:bold; padding:5px;">Opis gravure:</td><td style="padding:5px;">${o.boxEngraving || ""}</td></tr>` : ""}
-      <tr><td style="font-weight:bold; padding:5px;">Adresa:</td><td style="padding:5px;">${o.customerAddress || ""}</td></tr>
-      <tr><td style="font-weight:bold; padding:5px;">Telefon:</td><td style="padding:5px;">${o.customerPhone || ""}</td></tr>
-      <tr><td style="font-weight:bold; padding:5px;">Dodaci:</td><td style="padding:5px;">${o.orderExtras || ""}</td></tr>
-      <tr><td style="font-weight:bold; padding:5px;">Status:</td><td style="padding:5px;">${o.orderStatus || ""}</td></tr>
-      <tr><td style="font-weight:bold; padding:5px;">Cena:</td><td style="padding:5px;">${Number(o.orderPrice) || 0} RSD</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Ime i prezime:</td><td style="padding:5px;">${o.customername || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Vrsta trenerke:</td><td style="padding:5px;">${o.sweatshirttype || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Boja:</td><td style="padding:5px;">${o.sweatshirtcolor || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Veličina:</td><td style="padding:5px;">${o.sweatshirtsize || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Tekst/dizajn veza:</td><td style="padding:5px;">${o.embroiderytext || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Drvena kutija:</td><td style="padding:5px;">${o.woodenbox ? "Da" : "Ne"}</td></tr>
+      ${o.woodenbox ? `<tr><td style="font-weight:bold; padding:5px;">Opis gravure:</td><td style="padding:5px;">${o.boxengraving || ""}</td></tr>` : ""}
+      <tr><td style="font-weight:bold; padding:5px;">Adresa:</td><td style="padding:5px;">${o.customeraddress || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Telefon:</td><td style="padding:5px;">${o.customerphone || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Dodaci:</td><td style="padding:5px;">${o.orderextras || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Status:</td><td style="padding:5px;">${o.orderstatus || ""}</td></tr>
+      <tr><td style="font-weight:bold; padding:5px;">Cena:</td><td style="padding:5px;">${Number(o.orderprice) || 0} RSD</td></tr>
     </table>
   `;
-  html2pdf().set({filename:`Narudzbina_${(o.customerName||"")}.pdf`}).from(pdfContent).save();
+  html2pdf().set({filename:`Narudzbina_${(o.customername||"")}.pdf`}).from(pdfContent).save();
 }
 </script>
 </body>

@@ -147,29 +147,50 @@
 
 
         <div>
-          <label class="block text-sm font-medium">Vrsta trenerke</label>
-          <select id="sweatshirtType" class="w-full border rounded p-2">
-            <option value="Letnja">Letnja</option>
-            <option value="Zimska">Zimska</option>
-          </select>
-        </div>
+          <label class="inline-flex items-center mt-2">
+            <input type="checkbox" id="hasSweatshirt" class="mr-2">
+            Ima trenerku
+          </label>
+          <div id="sweatshirtDetails" class="hidden mt-2 space-y-3 sm:space-y-4">
+            <div>
+              <label class="block text-sm font-medium">Vrsta trenerke</label>
+              <select id="sweatshirtType" class="w-full border rounded p-2">
+                <option value="Letnja">Letnja</option>
+                <option value="Zimska">Zimska</option>
+              </select>
+            </div>
 
-        <div>
-          <label class="block text-sm font-medium">Boja trenerke</label>
-          <input type="text" id="sweatshirtColor" class="w-full border rounded p-2">
-        </div>
+            <div>
+              <label class="block text-sm font-medium">Boja trenerke</label>
+              <input type="text" id="sweatshirtColor" class="w-full border rounded p-2">
+            </div>
 
-        <div>
-          <label class="block text-sm font-medium">Veličina</label>
-          <select id="sweatshirtSize" class="w-full border rounded p-2">
-            <option>62</option><option>74</option><option>80</option><option>86</option>
-            <option>92</option><option>98</option><option>104</option><option>110</option>
-          </select>
-        </div>
+            <div>
+              <label class="block text-sm font-medium">Veličina</label>
+              <select id="sweatshirtSize" class="w-full border rounded p-2">
+                <option>62</option><option>68</option><option>74</option><option>80</option><option>86</option>
+                <option>92</option><option>98</option><option>104</option><option>110</option>
+              </select>
+            </div>
 
-        <div>
-          <label class="block text-sm font-medium">Tekst/dizajn veza</label>
-          <textarea id="embroideryText" class="w-full border rounded p-2 resize-y" rows="2"></textarea>
+            <div>
+              <label class="block text-sm font-medium">Tekst/dizajn veza</label>
+              <textarea id="embroideryText" class="w-full border rounded p-2 resize-y" rows="2"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium">Fon vez</label>
+              <select id="embroideryType" class="w-full border rounded p-2">
+                <option value="LovliBG">LovliBG</option>
+                <option value="Odisej">Odisej</option>
+                <option value="BDS Cir">BDS Cir</option>
+                <option value="BDSlat">BDSlat</option>
+                <option value="CIR">CIR</option>
+                <option value="StampCir">StampCir</option>
+                <option value="StamLat">StamLat</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <div>
@@ -207,6 +228,7 @@
             <option>Hitno</option>
             <option>Gotovo</option>
             <option>Lično preuzimanje</option>
+            <option>Čekamo uplatu</option>
           </select>
         </div>
 
@@ -337,8 +359,11 @@ const woodenBoxDetails = document.getElementById("woodenBoxDetails");
 const orderModalTitle = document.getElementById("orderModalTitle");
 const searchInput = document.getElementById("searchInput");
 
-/* --- Wooden box toggle --- */
+/* --- Toggle elements --- */
 woodenBox.addEventListener("change", () => woodenBoxDetails.classList.toggle("hidden", !woodenBox.checked));
+document.getElementById("hasSweatshirt").addEventListener("change", () => {
+  document.getElementById("sweatshirtDetails").classList.toggle("hidden", !document.getElementById("hasSweatshirt").checked);
+});
 
 /* --- OPEN/CLOSE MODAL --- */
 newOrderBtn.addEventListener("click", () => {
@@ -356,10 +381,10 @@ orderForm.addEventListener("submit", async (e) => {
 
   const orderData = {
     customername: document.getElementById("customerName").value.trim(),
-    sweatshirttype: document.getElementById("sweatshirtType").value,
-    sweatshirtcolor: document.getElementById("sweatshirtColor").value.trim(),
-    sweatshirtsize: document.getElementById("sweatshirtSize").value,
-    embroiderytext: document.getElementById("embroideryText").value.trim(),
+    sweatshirttype: document.getElementById("hasSweatshirt").checked ? document.getElementById("sweatshirtType").value : "",
+    sweatshirtcolor: document.getElementById("hasSweatshirt").checked ? document.getElementById("sweatshirtColor").value.trim() : "",
+    sweatshirtsize: document.getElementById("hasSweatshirt").checked ? document.getElementById("sweatshirtSize").value : "",
+    embroiderytext: document.getElementById("hasSweatshirt").checked ? document.getElementById("embroideryText").value.trim() : "",
     woodenbox: woodenBox.checked,
     boxengraving: document.getElementById("boxEngraving").value.trim(),
     customeraddress: document.getElementById("customerAddress").value.trim(),
@@ -465,10 +490,12 @@ function editOrder(index){
   const o = orders[index];
   editingIndex = index;
   document.getElementById("customerName").value = o.customername || "";
+  document.getElementById("hasSweatshirt").checked = !!o.sweatshirttype;
   document.getElementById("sweatshirtType").value = o.sweatshirttype || "Letnja";
   document.getElementById("sweatshirtColor").value = o.sweatshirtcolor || "";
   document.getElementById("sweatshirtSize").value = o.sweatshirtsize || "62";
   document.getElementById("embroideryText").value = o.embroiderytext || "";
+  document.getElementById("sweatshirtDetails").classList.toggle("hidden", !o.sweatshirttype);
   woodenBox.checked = !!o.woodenbox;
   document.getElementById("boxEngraving").value = o.boxengraving || "";
   woodenBoxDetails.classList.toggle("hidden", !o.woodenbox);

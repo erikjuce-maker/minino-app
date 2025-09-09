@@ -81,22 +81,52 @@
 
     <!-- DASHBOARD -->
     <section id="dashboard" class="mb-6">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div class="bg-white p-4 rounded-lg shadow" data-aos="fade-up">
-          <h3 class="text-sm font-medium text-gray-500">Ukupno narudžbina</h3>
-          <p class="mt-2 text-2xl font-bold" id="totalOrders">0</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-6 rounded-lg shadow-lg" data-aos="fade-up">
+          <h3 class="text-lg font-medium text-gray-500">Ukupno narudžbina</h3>
+          <p class="mt-4 text-4xl font-bold text-blue-600" id="totalOrders">0</p>
         </div>
-        <div class="bg-white p-4 rounded-lg shadow" data-aos="fade-up" data-aos-delay="100">
-          <h3 class="text-sm font-medium text-gray-500">Prihod</h3>
-          <p class="mt-2 text-2xl font-bold" id="totalRevenue">0 RSD</p>
+        <div class="bg-white p-6 rounded-lg shadow-lg" data-aos="fade-up" data-aos-delay="100">
+          <h3 class="text-lg font-medium text-gray-500">Ukupan prihod</h3>
+          <p class="mt-4 text-4xl font-bold text-green-600" id="totalRevenue">0 RSD</p>
         </div>
-        <div class="bg-white p-4 rounded-lg shadow" data-aos="fade-up" data-aos-delay="200">
-          <h3 class="text-sm font-medium text-gray-500">Aktivne narudžbine</h3>
-          <p class="mt-2 text-2xl font-bold" id="activeOrders">0</p>
+        <div class="bg-white p-6 rounded-lg shadow-lg" data-aos="fade-up" data-aos-delay="200">
+          <h3 class="text-lg font-medium text-gray-500">Aktivne narudžbine</h3>
+          <p class="mt-4 text-4xl font-bold text-orange-600" id="activeOrders">0</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-lg" data-aos="fade-up" data-aos-delay="300">
+          <h3 class="text-lg font-medium text-gray-500">Prosečna vrednost</h3>
+          <p class="mt-4 text-4xl font-bold text-purple-600" id="averageOrder">0 RSD</p>
         </div>
       </div>
-      <div class="mt-4 bg-white p-4 rounded-lg shadow" data-aos="fade-up">
-        <canvas id="ordersChart" class="w-full h-64"></canvas>
+
+      <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow-lg" data-aos="fade-up">
+          <h3 class="text-xl font-bold mb-4">Status narudžbina</h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-blue-100 p-4 rounded-lg">
+              <h4 class="text-sm text-blue-800">Novo</h4>
+              <p class="text-2xl font-bold text-blue-800" id="statusNew">0</p>
+            </div>
+            <div class="bg-yellow-100 p-4 rounded-lg">
+              <h4 class="text-sm text-yellow-800">U izradi</h4>
+              <p class="text-2xl font-bold text-yellow-800" id="statusInProgress">0</p>
+            </div>
+            <div class="bg-red-100 p-4 rounded-lg">
+              <h4 class="text-sm text-red-800">Hitno</h4>
+              <p class="text-2xl font-bold text-red-800" id="statusUrgent">0</p>
+            </div>
+            <div class="bg-green-100 p-4 rounded-lg">
+              <h4 class="text-sm text-green-800">Gotovo</h4>
+              <p class="text-2xl font-bold text-green-800" id="statusCompleted">0</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-lg" data-aos="fade-up">
+          <h3 class="text-xl font-bold mb-4">Prihod po mesecima</h3>
+          <canvas id="monthlyRevenueChart" class="w-full h-64"></canvas>
+        </div>
       </div>
     </section>
 
@@ -337,13 +367,6 @@ navLinks.forEach(link => {
   });
 });
 
-/* --- CHART --- */
-const ctx = document.getElementById('ordersChart').getContext('2d');
-const ordersChart = new Chart(ctx, {
-  type: 'line',
-  data: { labels: [], datasets: [{ label: 'Narudžbine', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.2)', fill: true }] },
-  options: { responsive: true, maintainAspectRatio: false }
-});
 
 /* --- STATE & ELEMENTS --- */
 let orders = [];
@@ -522,13 +545,57 @@ function updateDashboard(){
   const total = orders.length;
   const active = orders.filter(o => o.orderstatus !== "Gotovo" && o.orderstatus !== "Lično preuzimanje").length;
   const revenue = orders.reduce((sum, o) => sum + (Number(o.orderprice) || 0), 0);
+  const average = total > 0 ? Math.round(revenue / total) : 0;
+  
   document.getElementById("totalOrders").textContent = total;
   document.getElementById("activeOrders").textContent = active;
   document.getElementById("totalRevenue").textContent = revenue + " RSD";
+  document.getElementById("averageOrder").textContent = average + " RSD";
 
-  ordersChart.data.labels = orders.map((_, i) => "Narudžbina " + (i+1));
-  ordersChart.data.datasets[0].data = orders.map(o => Number(o.orderprice) || 0);
-  ordersChart.update();
+  // Status counts
+  document.getElementById("statusNew").textContent = orders.filter(o => o.orderstatus === "Novo").length;
+  document.getElementById("statusInProgress").textContent = orders.filter(o => o.orderstatus === "U izradi").length;
+  document.getElementById("statusUrgent").textContent = orders.filter(o => o.orderstatus === "Hitno").length;
+  document.getElementById("statusCompleted").textContent = orders.filter(o => o.orderstatus === "Gotovo" || o.orderstatus === "Lično preuzimanje").length;
+
+  // Monthly revenue chart
+  const months = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Avg", "Sep", "Okt", "Nov", "Dec"];
+  const monthlyRevenue = Array(12).fill(0);
+  
+  orders.forEach(o => {
+    const date = new Date(o.created_at || Date.now());
+    const month = date.getMonth();
+    monthlyRevenue[month] += Number(o.orderprice) || 0;
+  });
+
+  if (!window.monthlyRevenueChart) {
+    const ctx = document.getElementById('monthlyRevenueChart').getContext('2d');
+    window.monthlyRevenueChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [{
+          label: 'Prihod (RSD)',
+          data: monthlyRevenue,
+          backgroundColor: 'rgba(59, 130, 246, 0.7)',
+          borderColor: 'rgba(59, 130, 246, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  } else {
+    window.monthlyRevenueChart.data.datasets[0].data = monthlyRevenue;
+    window.monthlyRevenueChart.update();
+  }
 }
 
 /* --- EXPORT PDF --- */

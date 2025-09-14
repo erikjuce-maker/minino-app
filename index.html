@@ -139,22 +139,31 @@
       </div>
 
       <div class="bg-white rounded-lg shadow overflow-x-auto">
-        <table class="min-w-full table-auto text-sm sm:text-base">
+        <table class="min-w-full table-auto text-sm sm:text-base border-collapse">
+          <style>
+            tr {
+              border-bottom: 1px solid #e5e7eb;
+            }
+            tr:last-child {
+              border-bottom: none;
+            }
+          </style>
           <thead>
-            <tr class="bg-gray-100 text-left">
-              <th class="p-2 sm:p-4">Ime i prezime</th>
-              <th class="p-2 sm:p-4">Vrsta trenerke</th>
-              <th class="p-2 sm:p-4">Boja</th>
-              <th class="p-2 sm:p-4">Veličina</th>
-              <th class="p-2 sm:p-4">Tekst/dizajn veza</th>
-              <th class="p-2 sm:p-4">Drvena kutija</th>
-              <th class="p-2 sm:p-4">Adresa</th>
-              <th class="p-2 sm:p-4">Telefon</th>
-              <th class="p-2 sm:p-4">Dodaci</th>
-              <th class="p-2 sm:p-4">Status</th>
-              <th class="p-2 sm:p-4">Cena</th>
-              <th class="p-2 sm:p-4">Obriši</th>
-              <th class="p-2 sm:p-4">PDF</th>
+            <tr class="bg-gray-100 text-left sticky top-0">
+              <th class="p-2 sm:p-4 border-b border-gray-300">Datum</th>
+              <th class="p-2 sm:p-4 border-b border-gray-300">Ime i prezime</th>
+              <th class="p-2 sm:p-4 border-b border-gray-300">Vrsta trenerke</th>
+              <th class="p-2 sm:p-4 border-b border-gray-300">Boja</th>
+              <th class="p-2 sm:p-4 border-b border-gray-300">Veličina</th>
+              <th class="p-2 sm:p-4 border-b border-gray-300">Tekst/dizajn veza</th>
+              <th class="p-2 sm:p-4 border-b border-gray-300">Drvena kutija</th>
+              <th class="p-2 sm:p-4 border-b border-gray-300">Adresa</th>
+              <th class="p-2 sm:p-4 border-b border-gray-300">Telefon</th>
+              <th class="p-2 sm:p-4 border-b border-gray-300">Dodaci</th>
+              <th class="p-2 sm:p-4 border-b border-gray-300">Status</th>
+              <th class="p-2 sm:p-4 border-b border-gray-300">Cena</th>
+              <th class="p-2 sm:p-4 border-b border-gray-300">Obriši</th>
+              <th class="p-2 sm:p-4 border-b border-gray-300">PDF</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -169,6 +178,11 @@
     <div class="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
       <h2 class="text-xl font-bold mb-4" id="orderModalTitle">Nova narudžbina</h2>
       <form id="orderForm" class="space-y-3 sm:space-y-4">
+
+        <div>
+          <label class="block text-sm font-medium">Datum</label>
+          <input type="date" id="orderDate" required class="w-full border rounded p-2">
+        </div>
 
         <div>
           <label class="block text-sm font-medium">Ime i prezime</label>
@@ -252,13 +266,13 @@
         <div>
           <label class="block text-sm font-medium">Status</label>
           <select id="orderStatus" class="w-full border rounded p-2">
-            <option>Novo</option>
-            <option>U izradi</option>
-            <option>Spremno</option>
-            <option>Hitno</option>
-            <option>Gotovo</option>
-            <option>Lično preuzimanje</option>
-            <option>Čekamo uplatu</option>
+            <option class="bg-white">Novo</option>
+            <option class="bg-yellow-200">U izradi</option>
+            <option class="bg-blue-200">Spremno</option>
+            <option class="bg-red-200">Hitno</option>
+            <option class="bg-green-200">Gotovo</option>
+            <option class="bg-green-200">Lično preuzimanje</option>
+            <option class="bg-gray-700 text-white">Čekamo uplatu</option>
           </select>
         </div>
 
@@ -459,12 +473,15 @@ function updateTable(){
   orders.forEach((o, i) => {
     let statusClass = "bg-white text-black";
     if (o.orderstatus === "Hitno") statusClass = "bg-red-200 text-red-800";
-    else if (o.orderstatus === "Spremno") statusClass = "bg-yellow-200 text-yellow-800";
-    else if (o.orderstatus === "U izradi") statusClass = "bg-blue-200 text-blue-800";
+    else if (o.orderstatus === "Spremno") statusClass = "bg-blue-200 text-blue-800";
+    else if (o.orderstatus === "U izradi") statusClass = "bg-yellow-200 text-yellow-800";
     else if (o.orderstatus === "Gotovo" || o.orderstatus === "Lično preuzimanje") statusClass = "bg-green-200 text-green-800";
+    else if (o.orderstatus === "Čekamo uplatu") statusClass = "bg-gray-700 text-white";
 
     const tr = document.createElement("tr");
+    tr.className = statusClass.replace('text-', '').replace('bg-', '');
     tr.innerHTML = `
+      <td class="p-2 sm:p-4">${o.orderdate ? new Date(o.orderdate).toLocaleDateString() : ""}</td>
       <td class="p-2 sm:p-4 cursor-pointer">${o.customername || ""}</td>
       <td class="p-2 sm:p-4">${o.sweatshirttype || ""}</td>
       <td class="p-2 sm:p-4">${o.sweatshirtcolor || ""}</td>
@@ -474,7 +491,7 @@ function updateTable(){
       <td class="p-2 sm:p-4">${o.customeraddress || ""}</td>
       <td class="p-2 sm:p-4">${o.customerphone || ""}</td>
       <td class="p-2 sm:p-4">${o.orderextras || ""}</td>
-      <td class="p-2 sm:p-4 ${statusClass} rounded"><span class="text-xs">${o.orderstatus || ""}</span></td>
+      <td class="p-2 sm:p-4 rounded ${statusClass}"><span class="text-xs">${o.orderstatus || ""}</span></td>
       <td class="p-2 sm:p-4">${Number(o.orderprice) || 0} RSD</td>
       <td class="p-2 sm:p-4">
         <button class="deleteBtn text-red-500 hover:text-red-700" title="Obriši"><i class="fa-solid fa-trash"></i></button>
@@ -512,6 +529,7 @@ function updateTable(){
 function editOrder(index){
   const o = orders[index];
   editingIndex = index;
+  document.getElementById("orderDate").value = o.orderdate || new Date().toISOString().split('T')[0];
   document.getElementById("customerName").value = o.customername || "";
   document.getElementById("hasSweatshirt").checked = !!o.sweatshirttype;
   document.getElementById("sweatshirtType").value = o.sweatshirttype || "Letnja";
